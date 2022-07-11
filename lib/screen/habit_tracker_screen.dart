@@ -1,9 +1,11 @@
 import 'dart:async';
-
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:habit_tracker/main.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
-
-import '../custom_modal_bottom_sheet.dart';
+import '../widget/count_down_timer.dart';
+import '../widget/custom_modal_bottom_sheet.dart';
 import '../model/habit_model.dart';
 import '../widget/habit_list_tile.dart';
 import 'add_new_habit_screen.dart';
@@ -16,6 +18,9 @@ class HabitTrackerScreen extends StatefulWidget {
 }
 
 class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
+  var habits = <HabitModel>[];
+  Duration duration = const Duration();
+
   double calculateProgress(int i) => (habits[i].timeSpent / habits[i].timeGoal);
   double calculatePercentage(int i) =>
       (habits[i].timeSpent / habits[i].timeGoal) * 100;
@@ -30,24 +35,37 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
   double get totalPercentage =>
       (calculateTotalTimeSpent() / calculateTotalTimeGoal());
 
-  void startAndPauseTimer(int i) {
+  void startAndPauseTimer(HabitModel habits) {
     setState(() {
-      habits[i].habitStarted = !habits[i].habitStarted;
+      habits.habitStarted = !habits.habitStarted;
     });
-    if (habits[i].habitStarted) {
-      Timer.periodic(habits[i].duration!, (t) {
+    if (habits.habitStarted) {
+      Timer.periodic(habits.duration!, (t) {
         setState(() {
-          if (!habits[i].habitStarted) t.cancel();
-          if (habits[i].timeSpent + 1 == habits[i].timeGoal) {
+          if (!habits.habitStarted) t.cancel();
+          if (habits.timeSpent + 1 == habits.timeGoal) {
             t.cancel();
           }
-          if (!t.isActive) habits[i].habitStarted = false;
-          habits[i].timeSpent++;
+          if (!t.isActive) habits.habitStarted = false;
+          habits.timeSpent++;
         });
       });
     }
   }
 
+  Future<void> showNotification(int i) async {
+    await AwesomeNotifications().createNotification(
+        content: NotificationContent(
+            id: 10,
+            channelKey: 'basic_channel',
+            title: 'Simple notification',
+            body: calculatePercentage(i).toString(),
+            displayOnForeground: true,
+            displayOnBackground: true,
+            progress: 5));
+  }
+
+  bool isVisible = true;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,12 +73,15 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
         centerTitle: true,
         backgroundColor: Colors.indigo,
         title: const Text('Habit tracker'),
+        actions: [
+          IconButton(onPressed: () {}, icon: const Icon(Icons.history))
+        ],
       ),
       body: habits.isEmpty
           ? const Center(
               child: Icon(
               Icons.add_task,
-              size: 150,
+              size: 100,
               color: Colors.grey,
             ))
           : Column(
@@ -106,8 +127,12 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
                             },
                             timeGoal: habits[i].timeGoal,
                             timeSpent: habits[i].timeSpent,
+                            onIsVisibleTap: () =>
+                                setState(() => isVisible = !isVisible),
+                            isVisible: isVisible,
+                            countDownDuration: duration,
                             habitStarted: habits[i].habitStarted,
-                            startTimer: () => startAndPauseTimer(i),
+                            startTimer: () => startAndPauseTimer(habits[i]),
                             progress: calculateProgress(i),
                             percentage: calculatePercentage(i),
                           )),
@@ -115,8 +140,16 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
               ],
             ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (ctx) => const AddNewHabitScreen())),
+        onPressed: () async {
+          HabitModel result = await Navigator.of(context).push(
+              MaterialPageRoute(builder: (ctx) => const AddNewHabitScreen()));
+          setState(() {
+            habits.add(result);
+            if (result == null) return;
+            startAndPauseTimer(result);
+            duration = result.duration!;
+          });
+        },
         backgroundColor: Colors.indigo,
         child: const Icon(Icons.add),
       ),

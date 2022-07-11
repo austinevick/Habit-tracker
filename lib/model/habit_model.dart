@@ -6,8 +6,10 @@ class HabitModel {
   bool habitStarted;
   final String? durationString;
   final Duration? duration;
+  final String? description;
   HabitModel({
     this.name,
+    this.description,
     required this.timeSpent,
     required this.timeGoal,
     this.startedAt,
@@ -16,5 +18,3 @@ class HabitModel {
     this.habitStarted = false,
   });
 }
-
-final habits = <HabitModel>[];

@@ -11,30 +11,21 @@ class AddNewHabitScreen extends StatefulWidget {
 }
 
 class _AddNewHabitScreenState extends State<AddNewHabitScreen> {
-  String selectedValue = 'In Minutes';
-  final value = <String>['In Minutes', 'In Hours', 'In Days', 'In Seconds'];
+  String selectedValue = 'in minutes';
+  final value = <String>['in minutes', 'in hours', 'in days'];
   final name = TextEditingController();
   final timeSpent = TextEditingController();
+  final description = TextEditingController();
   final timeGoal = TextEditingController();
-  int countDown = 0;
+  int countDown = 1;
 
   Duration duration() {
-    if (selectedValue == value[0]) {
-      return Duration(
-        minutes: countDown,
-      );
-    } else if (selectedValue == value[1]) {
-      return Duration(
-        hours: countDown,
-      );
-    } else if (selectedValue == value[2]) {
-      return Duration(
-        days: countDown,
-      );
-    } else if (selectedValue == value[2]) {
-      return Duration(
-        seconds: countDown,
-      );
+    if (selectedValue == 'in minutes') {
+      return Duration(minutes: countDown);
+    } else if (selectedValue == 'in hours') {
+      return Duration(hours: countDown);
+    } else if (selectedValue == 'in days') {
+      return Duration(days: countDown);
     }
     return const Duration();
   }
@@ -68,6 +59,15 @@ class _AddNewHabitScreenState extends State<AddNewHabitScreen> {
                         controller: name,
                         decoration: const InputDecoration(
                             labelText: 'Enter habit name'),
+                      ),
+                      TextFormField(
+                        cursorColor: Colors.black,
+                        cursorWidth: 1,
+                        validator: (val) =>
+                            val!.isEmpty ? 'field is required' : null,
+                        controller: description,
+                        decoration: const InputDecoration(
+                            labelText: 'Enter description'),
                       ),
                       const SizedBox(height: 10),
                       TextFormField(
@@ -126,16 +126,15 @@ class _AddNewHabitScreenState extends State<AddNewHabitScreen> {
               onPressed: () {
                 var t = DateTime.now().add(duration());
                 print(t);
-                Navigator.of(context).pop();
                 final habit = HabitModel(
-                    name: name.text,
+                    name: "${name.text} $selectedValue",
                     duration: duration(),
                     startedAt: DateTime.now(),
                     timeSpent: 0,
+                    description: description.text,
                     timeGoal: int.parse(timeGoal.text));
-                setState(() {
-                  habits.add(habit);
-                });
+
+                Navigator.of(context).pop(habit);
 
                 showSnackbar(context, t.toString());
               },
