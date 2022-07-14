@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:math' as m;
-
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:habit_tracker/screen/habit_tracker_screen.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initNotification();
   runApp(const MyApp());
 }
 
@@ -16,7 +16,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      title: 'Flutter Demo',
+      color: Colors.indigo,
+      title: 'Habit Tracker',
       home: HabitTrackerScreen(),
     );
   }
@@ -25,9 +26,9 @@ class MyApp extends StatelessWidget {
 Future<void> initNotification() async {
   await AwesomeNotifications().initialize(null, [
     NotificationChannel(
-        channelKey: 'basic_channel',
-        channelName: 'basic nofitications',
-        channelDescription: 'Notification channel for basic tests',
+        channelKey: 'habit_channel',
+        channelName: 'habit nofitications',
+        channelDescription: 'Notification channel for habit tracker',
         defaultColor: Colors.indigo)
   ]);
 }

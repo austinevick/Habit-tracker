@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:habit_tracker/constant.dart';
 import 'package:habit_tracker/model/habit_model.dart';
+import 'package:habit_tracker/provider/habit_tracker_provider.dart';
 import 'package:intl/intl.dart';
 
 class AddNewHabitScreen extends StatefulWidget {
@@ -13,11 +14,12 @@ class AddNewHabitScreen extends StatefulWidget {
 class _AddNewHabitScreenState extends State<AddNewHabitScreen> {
   String selectedValue = 'in minutes';
   final value = <String>['in minutes', 'in hours', 'in days'];
+  final counter = <int>[1, 2, 3, 4, 5];
+  int countDown = 1;
   final name = TextEditingController();
   final timeSpent = TextEditingController();
   final description = TextEditingController();
   final timeGoal = TextEditingController();
-  int countDown = 1;
 
   Duration duration() {
     if (selectedValue == 'in minutes') {
@@ -30,9 +32,22 @@ class _AddNewHabitScreenState extends State<AddNewHabitScreen> {
     return const Duration();
   }
 
+  String getText() {
+    if (selectedValue == 'in minutes') {
+      if (countDown < 2) return 'minute';
+      return 'minutes';
+    } else if (selectedValue == 'in hours') {
+      if (countDown < 2) return 'hour';
+      return 'hours';
+    } else if (selectedValue == 'in days') {
+      if (countDown < 2) return 'hour';
+      return 'days';
+    }
+    return '';
+  }
+
   @override
   Widget build(BuildContext context) {
-    var t = DateTime.now().add(duration());
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -87,11 +102,10 @@ class _AddNewHabitScreenState extends State<AddNewHabitScreen> {
                             child: DropdownButtonFormField(
                                 isExpanded: true,
                                 value: countDown,
-                                items: List.generate(
-                                    5,
-                                    (i) => DropdownMenuItem<int>(
-                                        value: i,
-                                        child: Text(i.toString()))).toList(),
+                                items: counter
+                                    .map((e) => DropdownMenuItem<int>(
+                                        value: e, child: Text(e.toString())))
+                                    .toList(),
                                 onChanged: (int? val) =>
                                     setState(() => countDown = val!)),
                           ),
@@ -111,7 +125,7 @@ class _AddNewHabitScreenState extends State<AddNewHabitScreen> {
                       ),
                       const SizedBox(height: 35),
                       Text(
-                        'Your time elapses at ${DateFormat().format(t)}',
+                        'Your time goal will increment every $countDown ${getText()}',
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       )
                     ],
@@ -121,11 +135,9 @@ class _AddNewHabitScreenState extends State<AddNewHabitScreen> {
             ),
             MaterialButton(
               height: 58,
-              color: Colors.lightGreen,
+              color: Colors.indigo,
               minWidth: double.infinity,
-              onPressed: () {
-                var t = DateTime.now().add(duration());
-                print(t);
+              onPressed: () async {
                 final habit = HabitModel(
                     name: "${name.text} $selectedValue",
                     duration: duration(),
@@ -133,12 +145,13 @@ class _AddNewHabitScreenState extends State<AddNewHabitScreen> {
                     timeSpent: 0,
                     description: description.text,
                     timeGoal: int.parse(timeGoal.text));
-
                 Navigator.of(context).pop(habit);
-
-                showSnackbar(context, t.toString());
+                // await HabitTrackerProvider.saveHabit(habit);
               },
-              child: const Text('Add'),
+              child: const Text(
+                'Add',
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
             )
           ],
         ),

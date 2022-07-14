@@ -34,38 +34,43 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
       (calculateTotalTimeSpent() / calculateTotalTimeGoal()) * 100;
   double get totalPercentage =>
       (calculateTotalTimeSpent() / calculateTotalTimeGoal());
-
+  Timer? t;
   void startAndPauseTimer(HabitModel habits) {
     setState(() {
-      habits.habitStarted = !habits.habitStarted;
+      habits.shouldStart = !habits.shouldStart;
     });
-    if (habits.habitStarted) {
-      Timer.periodic(habits.duration!, (t) {
+    if (habits.shouldStart) {
+      t = Timer.periodic(habits.duration!, (t) {
         setState(() {
-          if (!habits.habitStarted) t.cancel();
           if (habits.timeSpent + 1 == habits.timeGoal) {
             t.cancel();
+            Future.delayed(
+                const Duration(seconds: 2), () => showNotification(habits));
           }
-          if (!t.isActive) habits.habitStarted = false;
+
+          if (!t.isActive) habits.shouldStart = false;
           habits.timeSpent++;
         });
       });
+    } else {
+      t!.cancel();
     }
   }
 
-  Future<void> showNotification(int i) async {
+  Future<void> showNotification(HabitModel habits) async {
     await AwesomeNotifications().createNotification(
         content: NotificationContent(
             id: 10,
-            channelKey: 'basic_channel',
-            title: 'Simple notification',
-            body: calculatePercentage(i).toString(),
+            channelKey: 'habit_channel',
+            title: habits.name,
+            body: "${habits.timeSpent} / ${habits.timeGoal}",
             displayOnForeground: true,
             displayOnBackground: true,
-            progress: 5));
+            category: NotificationCategory.Workout,
+            wakeUpScreen: true,
+            fullScreenIntent: true));
   }
 
-  bool isVisible = true;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -104,6 +109,8 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
                         fontSize: 11,
                         color: Colors.white),
                   ),
+                  progressColor:
+                      totalPercentage == 1 ? Colors.green : Colors.indigo,
                   barRadius: const Radius.circular(10),
                   percent: totalPercentage > 1 ? 0 : totalPercentage,
                 ),
@@ -127,11 +134,8 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
                             },
                             timeGoal: habits[i].timeGoal,
                             timeSpent: habits[i].timeSpent,
-                            onIsVisibleTap: () =>
-                                setState(() => isVisible = !isVisible),
-                            isVisible: isVisible,
                             countDownDuration: duration,
-                            habitStarted: habits[i].habitStarted,
+                            habitStarted: habits[i].shouldStart,
                             startTimer: () => startAndPauseTimer(habits[i]),
                             progress: calculateProgress(i),
                             percentage: calculatePercentage(i),
@@ -144,8 +148,8 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
           HabitModel result = await Navigator.of(context).push(
               MaterialPageRoute(builder: (ctx) => const AddNewHabitScreen()));
           setState(() {
-            habits.add(result);
             if (result == null) return;
+            habits.add(result);
             startAndPauseTimer(result);
             duration = result.duration!;
           });

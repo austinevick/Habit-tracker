@@ -12,11 +12,9 @@ class HabitListTile extends StatelessWidget {
   final double? progress;
   final Duration? countDownDuration;
   final double? percentage;
-  final bool? isVisible;
   const HabitListTile({
     Key? key,
     this.habitName,
-    this.isVisible = false,
     this.percentage,
     this.progress,
     this.onSettingTap,
@@ -53,7 +51,7 @@ class HabitListTile extends StatelessWidget {
                           child: CircularProgressIndicator(
                             backgroundColor: Colors.grey,
                             strokeWidth: 5.0,
-                            color: Colors.indigo,
+                            color: progress == 1 ? Colors.green : Colors.indigo,
                             value: progress,
                           ),
                         ),
@@ -78,9 +76,9 @@ class HabitListTile extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           '$timeSpent / $timeGoal',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontWeight: FontWeight.w700,
-                              color: Colors.grey,
+                              color: progress == 1 ? Colors.green : Colors.grey,
                               fontSize: 14),
                         ),
                       ],
@@ -93,23 +91,21 @@ class HabitListTile extends StatelessWidget {
                             !habitStarted! ? Icons.play_arrow : Icons.pause))
                   ],
                 ),
-                SizedBox(height: isVisible! ? 0 : 8),
-                isVisible!
-                    ? const SizedBox.shrink()
-                    : SizedBox(
-                        height: 50,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: CountDownTimer(
-                                  countDownDuration: countDownDuration),
-                            ),
-                            IconButton(
-                                iconSize: 26,
-                                onPressed: onSettingTap,
-                                icon: const Icon(Icons.more_vert))
-                          ],
-                        )),
+                const SizedBox(height: 8),
+                SizedBox(
+                    height: 50,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: CountDownTimer(
+                              countDownDuration: countDownDuration),
+                        ),
+                        IconButton(
+                            iconSize: 26,
+                            onPressed: onSettingTap,
+                            icon: const Icon(Icons.more_vert))
+                      ],
+                    )),
               ],
             ),
           ),
