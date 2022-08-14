@@ -20,6 +20,7 @@ dependencies:
   mobility_features: ^3.1.0
   percent_indicator: ^4.2.0
   flutter_local_notifications: ^9.7.0
+  background_fetch: ^1.1.0
   sqflite: ^2.0.3
   path: ^1.8.1
 

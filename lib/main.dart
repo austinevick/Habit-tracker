@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:math' as m;
 import 'package:awesome_notifications/awesome_notifications.dart';
+import 'package:background_fetch/background_fetch.dart';
 import 'package:flutter/material.dart';
 import 'package:habit_tracker/screen/habit_tracker_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initBackgroundService();
   await initNotification();
   runApp(const MyApp());
 }
@@ -33,45 +35,36 @@ Future<void> initNotification() async {
   ]);
 }
 
-class MathTest extends StatefulWidget {
-  const MathTest({Key? key}) : super(key: key);
-
-  @override
-  State<MathTest> createState() => _MathTestState();
+Future<void> initBackgroundService() async {
+  var status = await BackgroundFetch.configure(
+      BackgroundFetchConfig(minimumFetchInterval: 5, stopOnTerminate: false),
+      onBackgroundFetch,
+      _onBackgroundFetchTimeout);
+  print('background service: $status');
+  BackgroundFetch.scheduleTask(TaskConfig(
+      taskId: '1', delay: 1000, stopOnTerminate: false, periodic: true));
 }
 
-class _MathTestState extends State<MathTest> {
-  final name = TextEditingController();
-  final timeSpent = TextEditingController();
-  final timeGoal = TextEditingController();
-  double radius = 20;
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        body: SingleChildScrollView(
-      child: Column(
-        children: [
-          const SizedBox(height: 10),
-          TextFormField(
-            cursorColor: Colors.black,
-            cursorWidth: 1,
-            validator: (val) => val!.isEmpty ? 'field is required' : null,
-            controller: timeGoal,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Enter time Goal'),
-          ),
-          MaterialButton(
-            height: 58,
-            color: Colors.lightGreen,
-            minWidth: double.infinity,
-            onPressed: () {
-              double areaOfACircle = m.pi * m.pow(radius, 2);
-              print(areaOfACircle);
-            },
-            child: const Text('Add'),
-          )
-        ],
-      ),
-    ));
+void onBackgroundFetch(String taskId) async {
+  if (taskId == '1') {
+    showNotification();
   }
+}
+
+Future<void> showNotification() async {
+  await AwesomeNotifications().createNotification(
+      content: NotificationContent(
+          id: 10,
+          channelKey: 'habit_channel',
+          title: 'habits.name',
+          body: "Hello",
+          displayOnForeground: true,
+          displayOnBackground: true,
+          wakeUpScreen: true,
+          fullScreenIntent: true));
+}
+
+void _onBackgroundFetchTimeout(String taskId) {
+  print('[BackgroundFetch] TIMEOUT: $taskId');
+  BackgroundFetch.finish(taskId);
 }
