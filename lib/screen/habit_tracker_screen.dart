@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:habit_tracker/main.dart';
+import 'package:move_to_background/move_to_background.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
-import '../widget/count_down_timer.dart';
 import '../widget/custom_modal_bottom_sheet.dart';
 import '../model/habit_model.dart';
 import '../widget/habit_list_tile.dart';
@@ -73,89 +71,96 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        backgroundColor: Colors.indigo,
-        title: const Text('Habit tracker'),
-        actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.history))
-        ],
-      ),
-      body: habits.isEmpty
-          ? const Center(
-              child: Icon(
-              Icons.add_task,
-              size: 100,
-              color: Colors.grey,
-            ))
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text(
-                    'Today',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+    return WillPopScope(
+      onWillPop: () async {
+        MoveToBackground.moveTaskToBack();
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          centerTitle: true,
+          backgroundColor: Colors.indigo,
+          title: const Text('Habit tracker'),
+          actions: [
+            IconButton(onPressed: () {}, icon: const Icon(Icons.history))
+          ],
+        ),
+        body: habits.isEmpty
+            ? const Center(
+                child: Icon(
+                Icons.add_task,
+                size: 100,
+                color: Colors.grey,
+              ))
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text(
+                      'Today',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 5),
-                LinearPercentIndicator(
-                  lineHeight: 25,
-                  center: Text(
-                    '${calculateTotalTimeSpentAndTotalTimeGoalPercentage().toStringAsFixed(0)}%',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 11,
-                        color: Colors.white),
+                  const SizedBox(height: 5),
+                  LinearPercentIndicator(
+                    lineHeight: 25,
+                    center: Text(
+                      '${calculateTotalTimeSpentAndTotalTimeGoalPercentage().toStringAsFixed(0)}%',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                          color: Colors.white),
+                    ),
+                    progressColor:
+                        totalPercentage == 1 ? Colors.green : Colors.indigo,
+                    barRadius: const Radius.circular(10),
+                    percent: totalPercentage > 1 ? 0 : totalPercentage,
                   ),
-                  progressColor:
-                      totalPercentage == 1 ? Colors.green : Colors.indigo,
-                  barRadius: const Radius.circular(10),
-                  percent: totalPercentage > 1 ? 0 : totalPercentage,
-                ),
-                const SizedBox(height: 20),
-                Expanded(
-                  child: ListView.builder(
-                      itemCount: habits.length,
-                      itemBuilder: (ctx, i) => HabitListTile(
-                            habitName: habits[i].name,
-                            onSettingTap: () {
-                              showModalBottomSheet(
-                                  backgroundColor: Colors.transparent,
-                                  context: context,
-                                  builder: (ctx) => CustomModalBottomSheet(
-                                        title: habits[i].name!,
-                                        button1Text: 'Delete',
-                                        button2Text: 'Edit',
-                                        button1OnTap: () {},
-                                        button2OnTap: () {},
-                                      ));
-                            },
-                            timeGoal: habits[i].timeGoal,
-                            timeSpent: habits[i].timeSpent,
-                            countDownDuration: duration,
-                            habitStarted: habits[i].shouldStart,
-                            startTimer: () => startAndPauseTimer(habits[i]),
-                            progress: calculateProgress(i),
-                            percentage: calculatePercentage(i),
-                          )),
-                ),
-              ],
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          HabitModel result = await Navigator.of(context).push(
-              MaterialPageRoute(builder: (ctx) => const AddNewHabitScreen()));
-          setState(() {
-            if (result == null) return;
-            habits.add(result);
-            startAndPauseTimer(result);
-            duration = result.duration!;
-          });
-        },
-        backgroundColor: Colors.indigo,
-        child: const Icon(Icons.add),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: ListView.builder(
+                        itemCount: habits.length,
+                        itemBuilder: (ctx, i) => HabitListTile(
+                              habitName: habits[i].name,
+                              onSettingTap: () {
+                                showModalBottomSheet(
+                                    backgroundColor: Colors.transparent,
+                                    context: context,
+                                    builder: (ctx) => CustomModalBottomSheet(
+                                          title: habits[i].name!,
+                                          button1Text: 'Delete',
+                                          button2Text: 'Edit',
+                                          button1OnTap: () {},
+                                          button2OnTap: () {},
+                                        ));
+                              },
+                              timeGoal: habits[i].timeGoal,
+                              timeSpent: habits[i].timeSpent,
+                              countDownDuration: duration,
+                              habitStarted: habits[i].shouldStart,
+                              startTimer: () => startAndPauseTimer(habits[i]),
+                              progress: calculateProgress(i),
+                              percentage: calculatePercentage(i),
+                            )),
+                  ),
+                ],
+              ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () async {
+            HabitModel result = await Navigator.of(context).push(
+                MaterialPageRoute(builder: (ctx) => const AddNewHabitScreen()));
+            setState(() {
+              if (result == null) return;
+              habits.add(result);
+              startAndPauseTimer(result);
+              duration = result.duration!;
+            });
+          },
+          backgroundColor: Colors.indigo,
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }

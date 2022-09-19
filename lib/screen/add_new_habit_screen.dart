@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:habit_tracker/constant.dart';
 import 'package:habit_tracker/model/habit_model.dart';
-import 'package:habit_tracker/provider/habit_tracker_provider.dart';
-import 'package:intl/intl.dart';
 
 class AddNewHabitScreen extends StatefulWidget {
   const AddNewHabitScreen({Key? key}) : super(key: key);
